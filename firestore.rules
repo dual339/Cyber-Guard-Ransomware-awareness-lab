@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "vadijesanthosh@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasOnly(['uid', 'email', 'displayName', 'lastActive', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() < 256 &&
+             (data.role == 'user' || (data.role == 'admin' && isAdmin()));
+    }
+
+    function isValidSimulation(data) {
+      return data.keys().hasOnly(['userId', 'timestamp', 'filesEncrypted', 'filesDeleted', 'status', 'attackType']) &&
+             data.userId == request.auth.uid &&
+             data.filesEncrypted is int &&
+             data.filesEncrypted >= 0 &&
+             data.filesEncrypted <= 100 &&
+             data.filesDeleted is int &&
+             data.filesDeleted >= 0 &&
+             data.filesDeleted <= 100 &&
+             data.status in ['completed', 'interrupted'] &&
+             data.attackType in ['encrypt', 'wipe'] &&
+             data.timestamp is string;
+    }
+
+    function isValidDefenseProgress(data) {
+      return data.keys().hasOnly(['userId', 'completedSteps']) &&
+             data.userId == request.auth.uid &&
+             data.completedSteps is list &&
+             data.completedSteps.size() <= 50;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isValidUserProfile(request.resource.data);
+    }
+
+    match /simulations/{simId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSimulation(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /defense_progress/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidDefenseProgress(request.resource.data);
+    }
+  }
+}

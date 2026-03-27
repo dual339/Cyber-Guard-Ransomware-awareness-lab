@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user-specific settings and progress.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "SimulationHistory": {
+      "title": "Simulation History",
+      "description": "Logs of threat simulations run by the user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "filesEncrypted": { "type": "integer" },
+        "filesDeleted": { "type": "integer" },
+        "status": { "type": "string", "enum": ["completed", "interrupted"] },
+        "attackType": { "type": "string", "enum": ["encrypt", "wipe"] }
+      },
+      "required": ["userId", "timestamp", "filesEncrypted", "filesDeleted", "status", "attackType"]
+    },
+    "DefenseProgress": {
+      "title": "Defense Progress",
+      "description": "Tracks completed items in the defense checklist.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "completedSteps": { 
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["userId", "completedSteps"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/simulations/{simId}": {
+      "schema": "SimulationHistory",
+      "description": "History of simulations."
+    },
+    "/defense_progress/{userId}": {
+      "schema": "DefenseProgress",
+      "description": "User defense checklist progress."
+    }
+  }
+}

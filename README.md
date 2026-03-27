@@ -1,0 +1,37 @@
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
+
+# Run and deploy your AI Studio app
+
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/bcf602cd-6c69-4b73-a0d9-b4390e2871c1
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Optional: set `MALWAREBAZAAR_AUTH_KEY` in [.env.local](.env.local) to enable MD5/SHA256 malware hash lookups
+4. Run the app:
+   `npm run dev`
+
+## Deploy To Cloud Run
+
+This app uses an Express server and Socket.IO, so it should be deployed to a Node-capable host such as Google Cloud Run.
+
+1. Build and verify locally:
+   `npm run build`
+2. Authenticate and select your Google Cloud project:
+   `gcloud auth login`
+   `gcloud config set project YOUR_PROJECT_ID`
+3. Deploy from source:
+   `gcloud run deploy cyber-guard-ransomware-awareness-lab --source . --region us-central1 --allow-unauthenticated`
+4. Set runtime environment variables after deploy if needed:
+   `gcloud run services update cyber-guard-ransomware-awareness-lab --region us-central1 --set-env-vars GEMINI_API_KEY=YOUR_KEY,MALWAREBAZAAR_AUTH_KEY=YOUR_KEY`
+
+Cloud Run will provide the `PORT` environment variable automatically, and the app now listens on that port in production.

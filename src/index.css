@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #f6f1e8;
+  --color-ink: #111111;
+  --color-line: #d9d0c2;
+  --color-surface: #ffffff;
+  --color-surface-strong: #111111;
+  --color-surface-text: #111111;
+  --color-on-strong: #f6f1e8;
+  --color-accent: #d97706;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #15803d;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #090909;
+  --color-ink: #f4efe6;
+  --color-line: #2b2b2b;
+  --color-surface: #151515;
+  --color-surface-strong: #f4efe6;
+  --color-surface-text: #f4efe6;
+  --color-on-strong: #090909;
+  --color-accent: #f59e0b;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-ink: var(--color-ink);
+  --color-line: var(--color-line);
+  --color-accent: var(--color-accent);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-success: var(--color-success);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-bg);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.col-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 208, 194, 0.7) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(217, 208, 194, 0.75);
+  border-radius: 9999px;
+}
+
+:root[data-theme="dark"] .bg-white {
+  background-color: var(--color-surface) !important;
+  color: var(--color-surface-text) !important;
+}
+
+:root[data-theme="dark"] .bg-ink {
+  background-color: var(--color-surface-strong) !important;
+}
+
+:root[data-theme="dark"] .bg-bg {
+  background-color: var(--color-bg) !important;
+}
+
+:root[data-theme="dark"] .text-ink {
+  color: var(--color-ink) !important;
+}
+
+:root[data-theme="dark"] .text-bg {
+  color: var(--color-on-strong) !important;
+}
+
+:root[data-theme="dark"] .border-line {
+  border-color: var(--color-line) !important;
+}
+
+:root[data-theme="dark"] .hover\:bg-ink:hover {
+  background-color: var(--color-surface-strong) !important;
+}
+
+:root[data-theme="dark"] .hover\:text-bg:hover {
+  color: var(--color-on-strong) !important;
+}
