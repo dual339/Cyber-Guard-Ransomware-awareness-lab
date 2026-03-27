@@ -2,21 +2,20 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Cyber Guard: Ransomware Awareness Lab
 
-This contains everything you need to run your app locally.
+Cyber Guard: Ransomware Awareness Lab is an interactive cybersecurity training platform that simulates ransomware incidents in a safe environment. It features malware analysis, encryption demos, defense guidance, and live attacker-defender drills using React, TypeScript, Node.js, Socket.IO, and Firebase.
 
-View your app in AI Studio: https://ai.studio/apps/bcf602cd-6c69-4b73-a0d9-b4390e2871c1
+View the original AI Studio app: https://ai.studio/apps/bcf602cd-6c69-4b73-a0d9-b4390e2871c1
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Optional: set `MALWAREBAZAAR_AUTH_KEY` in [.env.local](.env.local) to enable MD5/SHA256 malware hash lookups
+2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key.
+3. Optional: set `MALWAREBAZAAR_AUTH_KEY` in `.env.local` to enable MD5/SHA256 malware hash lookups.
 4. Run the app:
    `npm run dev`
 
@@ -34,4 +33,4 @@ This app uses an Express server and Socket.IO, so it should be deployed to a Nod
 4. Set runtime environment variables after deploy if needed:
    `gcloud run services update cyber-guard-ransomware-awareness-lab --region us-central1 --set-env-vars GEMINI_API_KEY=YOUR_KEY,MALWAREBAZAAR_AUTH_KEY=YOUR_KEY`
 
-Cloud Run will provide the `PORT` environment variable automatically, and the app now listens on that port in production.
+Cloud Run will provide the `PORT` environment variable automatically, and the app listens on that port in production.
