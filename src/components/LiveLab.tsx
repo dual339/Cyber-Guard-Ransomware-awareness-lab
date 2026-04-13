@@ -81,6 +81,8 @@ interface IncidentStageDetail {
   defenderView: string;
 }
 
+type LiveLabMode = 'realtime' | 'local';
+
 const MOCK_FILES = [
   { id: '1', name: 'secrets.txt', type: 'doc' },
   { id: '2', name: 'database.db', type: 'data' },
@@ -339,6 +341,7 @@ const SPOKEN_RANSOM_AMOUNTS: Record<DrillScenario['id'], string> = {
 export default function LiveLab() {
   const { user } = useFirebase();
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [liveLabMode, setLiveLabMode] = useState<LiveLabMode>('realtime');
   const [roomId, setRoomId] = useState('training-room-1');
   const [roomIdDraft, setRoomIdDraft] = useState('training-room-1');
   const [role, setRole] = useState<'attacker' | 'defender' | null>(null);
@@ -400,48 +403,81 @@ export default function LiveLab() {
     return artifact.stage === 'Recon';
   });
 
+  const resetDrillState = () => {
+    setContainmentStatus('idle');
+    setDetectionScore(18);
+    setDrillStage('Recon');
+    setElapsedSeconds(0);
+    setCompromiseVisual(false);
+    setHackAnnouncementSent(false);
+    setReport(null);
+    setEncryptedFiles([]);
+  };
+
+  const handleAttackStarted = () => {
+    setContainmentStatus('in_progress');
+    setDrillStage('Encryption');
+    setReport(null);
+    setElapsedSeconds(0);
+    setCompromiseVisual(false);
+    setHackAnnouncementSent(false);
+    setLogs(prev => [...prev, '[SYSTEM] Controlled ransomware drill initiated.']);
+    setEncryptedFiles([]);
+  };
+
+  const handleFileEncrypted = (fileId: string) => {
+    setEncryptedFiles(prev => [...prev, fileId]);
+    setTelemetryPulse(true);
+    setTimeout(() => setTelemetryPulse(false), 900);
+    setDetectionScore(prev => Math.min(prev + 12, 100));
+    setLogs(prev => [...prev, `[ALERT] File encrypted: ${MOCK_FILES.find(f => f.id === fileId)?.name}`]);
+  };
+
+  const handleDrillEvent = ({ level, message }: DrillEvent) => {
+    setTelemetryPulse(true);
+    setTimeout(() => setTelemetryPulse(false), 900);
+    if (level === 'critical') {
+      setDetectionScore(prev => Math.min(prev + 16, 100));
+      setCompromiseVisual(true);
+    }
+    setLogs(prev => [...prev, `[${level.toUpperCase()}] ${message}`]);
+  };
+
+  const handleAttackContained = () => {
+    setContainmentStatus('contained');
+    setDrillStage('Contained');
+    setCompromiseVisual(false);
+    setLogs(prev => [...prev, '[SUCCESS] Defensive controls isolated the simulated incident.']);
+  };
+
   useEffect(() => {
-    const newSocket = io();
+    if (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')) {
+      setLiveLabMode('local');
+      return () => undefined;
+    }
+
+    const newSocket = io(undefined, {
+      timeout: 4000,
+      reconnectionAttempts: 2,
+    });
     setSocket(newSocket);
 
     newSocket.on('room-update', (state: RoomState) => {
       setRoomState(state);
     });
 
-    newSocket.on('attack-started', () => {
-      setContainmentStatus('in_progress');
-      setDrillStage('Encryption');
-      setReport(null);
-      setElapsedSeconds(0);
-      setCompromiseVisual(false);
-      setHackAnnouncementSent(false);
-      setLogs(prev => [...prev, '[SYSTEM] Controlled ransomware drill initiated.']);
-      setEncryptedFiles([]);
-    });
-
+    newSocket.on('attack-started', handleAttackStarted);
     newSocket.on('file-status-update', ({ fileId }: { fileId: string }) => {
-      setEncryptedFiles(prev => [...prev, fileId]);
-      setTelemetryPulse(true);
-      setTimeout(() => setTelemetryPulse(false), 900);
-      setDetectionScore(prev => Math.min(prev + 12, 100));
-      setLogs(prev => [...prev, `[ALERT] File encrypted: ${MOCK_FILES.find(f => f.id === fileId)?.name}`]);
+      handleFileEncrypted(fileId);
     });
-
     newSocket.on('drill-event', ({ level, message }: DrillEvent) => {
-      setTelemetryPulse(true);
-      setTimeout(() => setTelemetryPulse(false), 900);
-      if (level === 'critical') {
-        setDetectionScore(prev => Math.min(prev + 16, 100));
-        setCompromiseVisual(true);
-      }
-      setLogs(prev => [...prev, `[${level.toUpperCase()}] ${message}`]);
+      handleDrillEvent({ level, message });
     });
-
-    newSocket.on('attack-contained', () => {
-      setContainmentStatus('contained');
-      setDrillStage('Contained');
-      setCompromiseVisual(false);
-      setLogs(prev => [...prev, '[SUCCESS] Defensive controls isolated the simulated incident.']);
+    newSocket.on('attack-contained', handleAttackContained);
+    newSocket.on('connect_error', () => {
+      setLiveLabMode('local');
+      setSocket(null);
+      newSocket.close();
     });
 
     return () => {
@@ -452,21 +488,55 @@ export default function LiveLab() {
   const joinRoom = () => {
     const normalizedRoomId = roomIdDraft.trim();
 
+    if (liveLabMode === 'local' && role && normalizedRoomId) {
+      setRoomId(normalizedRoomId);
+      setRoomState({
+        attackerId: 'local-attacker',
+        defenderId: 'local-defender',
+        status: 'ready',
+      });
+      resetDrillState();
+      setLogs(prev => [...prev, `[INFO] Joined room ${normalizedRoomId} in LOCAL MODE as ${role.toUpperCase()}`]);
+      return;
+    }
+
     if (socket && role && normalizedRoomId) {
       setRoomId(normalizedRoomId);
       socket.emit('join-room', normalizedRoomId, role);
-      setContainmentStatus('idle');
-      setDetectionScore(18);
-      setDrillStage('Recon');
-      setElapsedSeconds(0);
-      setCompromiseVisual(false);
-      setHackAnnouncementSent(false);
-      setReport(null);
+      resetDrillState();
       setLogs(prev => [...prev, `[INFO] Joined room ${normalizedRoomId} as ${role.toUpperCase()}`]);
     }
   };
 
   const startAttack = async () => {
+    if (liveLabMode === 'local') {
+      setRoomState(prev => ({
+        attackerId: prev?.attackerId ?? 'local-attacker',
+        defenderId: prev?.defenderId ?? 'local-defender',
+        status: 'attacking',
+      }));
+      handleAttackStarted();
+
+      for (const event of selectedScenario.introEvents) {
+        if (event.delayMs > 0) {
+          await new Promise(r => setTimeout(r, event.delayMs));
+        }
+        handleDrillEvent(event);
+      }
+
+      for (const file of MOCK_FILES) {
+        await new Promise(r => setTimeout(r, selectedScenario.fileDelayMs));
+        handleFileEncrypted(file.id);
+      }
+
+      handleDrillEvent(selectedScenario.finalEvent);
+
+      setTimeout(() => {
+        setDrillStage('Assessment');
+      }, 600);
+      return;
+    }
+
     if (socket && role === 'attacker') {
       socket.emit('start-attack', roomId);
 
@@ -494,6 +564,12 @@ export default function LiveLab() {
   };
 
   const emitDefenderEvent = (level: DrillEvent['level'], message: string, scoreBoost = 8) => {
+    if (liveLabMode === 'local') {
+      handleDrillEvent({ level, message });
+      setDetectionScore(prev => Math.min(prev + scoreBoost, 100));
+      return;
+    }
+
     if (socket) {
       socket.emit('broadcast-drill-event', roomId, { level, message });
       setDetectionScore(prev => Math.min(prev + scoreBoost, 100));
@@ -501,6 +577,19 @@ export default function LiveLab() {
   };
 
   const emitControllerEvent = (action: ControllerAction) => {
+    if (liveLabMode === 'local') {
+      handleDrillEvent({
+        level: action.level,
+        message: action.message,
+      });
+      setDetectionScore(prev => Math.min(prev + action.scoreBoost, 100));
+      if (action.level === 'critical') {
+        setCompromiseVisual(true);
+      }
+      setLogs(prev => [...prev, `[CONTROLLER] ${action.label} executed.`]);
+      return;
+    }
+
     if (socket && role === 'attacker') {
       socket.emit('broadcast-drill-event', roomId, {
         level: action.level,
@@ -515,6 +604,12 @@ export default function LiveLab() {
   };
 
   const containAttack = () => {
+    if (liveLabMode === 'local') {
+      setRoomState(prev => prev ? { ...prev, status: 'finished' } : prev);
+      handleAttackContained();
+      return;
+    }
+
     if (socket && role === 'defender') {
       socket.emit('contain-attack', roomId);
       setContainmentStatus('contained');
@@ -754,6 +849,11 @@ export default function LiveLab() {
           <p className="text-ink/60 font-serif italic max-w-md">
             Select your role to begin a real-time collaborative simulation.
           </p>
+          {liveLabMode === 'local' && (
+            <div className="max-w-xl mx-auto border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-ink/75">
+              Static-host fallback is active. GitHub Pages cannot run the realtime Socket.IO backend, so Live Lab switches to a local single-browser drill mode here.
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl">
@@ -889,6 +989,10 @@ export default function LiveLab() {
             <span className="text-warning">Difficulty: {selectedScenario.difficulty}</span>
             <span className="opacity-30">|</span>
             <span className="text-accent">Stage: {drillStage}</span>
+            <span className="opacity-30">|</span>
+            <span className={liveLabMode === 'local' ? 'text-warning' : 'text-success'}>
+              Mode: {liveLabMode}
+            </span>
           </div>
         </div>
 
@@ -942,12 +1046,12 @@ export default function LiveLab() {
                 Join Room
               </button>
             </div>
-          ) : role === 'attacker' && roomState.status === 'ready' && (
+          ) : (role === 'attacker' || liveLabMode === 'local') && roomState.status === 'ready' && (
             <button 
               onClick={startAttack}
               className="px-8 py-3 bg-danger text-bg font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2"
             >
-              <Play className="w-4 h-4" /> Start Drill
+              <Play className="w-4 h-4" /> {liveLabMode === 'local' && role === 'defender' ? 'Start Solo Drill' : 'Start Drill'}
             </button>
           )}
         </div>
