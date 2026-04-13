@@ -34,3 +34,11 @@ This app uses an Express server and Socket.IO, so it should be deployed to a Nod
    `gcloud run services update cyber-guard-ransomware-awareness-lab --region us-central1 --set-env-vars GEMINI_API_KEY=YOUR_KEY,MALWAREBAZAAR_AUTH_KEY=YOUR_KEY`
 
 Cloud Run will provide the `PORT` environment variable automatically, and the app listens on that port in production.
+
+## GitHub Pages
+
+This repository also includes a GitHub Pages workflow that publishes the static frontend to:
+
+`https://dual339.github.io/Cyber-Guard-Ransomware-awareness-lab/`
+
+GitHub Pages can host the React/Vite frontend, but it cannot run the Express API or Socket.IO server. That means backend-dependent features such as the live room drill and server-side hash lookup need a separate backend host if you want full functionality online.
