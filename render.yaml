@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cyber-guard-ransomware-awareness-lab
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MALWAREBAZAAR_AUTH_KEY
+        sync: false

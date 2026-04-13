@@ -37,3 +37,21 @@ This repository also includes a GitHub Pages workflow that publishes the static 
 `https://dual339.github.io/Cyber-Guard-Ransomware-awareness-lab/`
 
 GitHub Pages can host the React/Vite frontend, but it cannot run the Express API or Socket.IO server. That means backend-dependent features such as the live room drill and server-side hash lookup need a separate backend host if you want full functionality online.
+
+## Deploy To Render (Free)
+
+This project includes a [render.yaml](C:\CyberGuard\ransomware-awareness-lab\render.yaml) blueprint so it can be deployed as a free Render web service.
+
+1. Push the latest code to GitHub.
+2. Open [Render Dashboard](https://dashboard.render.com/).
+3. Click `New +` -> `Blueprint`.
+4. Connect the GitHub repository:
+   `https://github.com/dual339/Cyber-Guard-Ransomware-awareness-lab`
+5. Render will detect `render.yaml` and create the service automatically.
+6. Add these environment variables in Render if you want the integrations to work:
+   `GEMINI_API_KEY`
+   `MALWAREBAZAAR_AUTH_KEY`
+
+Notes:
+- The free Render plan may sleep after inactivity, so the first request can be slow.
+- Render can host the Express app and Socket.IO service, which makes it a better fit for this project than GitHub Pages.
