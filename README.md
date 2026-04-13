@@ -1,12 +1,7 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # Cyber Guard: Ransomware Awareness Lab
 
 Cyber Guard: Ransomware Awareness Lab is an interactive cybersecurity training platform that simulates ransomware incidents in a safe environment. It features malware analysis, encryption demos, defense guidance, and live attacker-defender drills using React, TypeScript, Node.js, Socket.IO, and Firebase.
 
-View the original AI Studio app: https://ai.studio/apps/bcf602cd-6c69-4b73-a0d9-b4390e2871c1
 
 ## Run Locally
 
